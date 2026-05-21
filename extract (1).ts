@@ -457,7 +457,7 @@ export async function processSinglePdf({
     // Applied after AI extraction. These rules flag inadmissibility based on
     // policy conditions that the AI may not have access to compare directly.
     if (claimType === "maternity") {
-      const admiss = initialAnalysis.medicalAdmissibility as Record<string, unknown> | null | undefined;
+      const admiss = initialAnalysis.medicalAdmissibility as unknown as Record<string, unknown> | null | undefined;
       const condTests = (admiss?.conditionTests as Array<Record<string, unknown>> | undefined) ?? [];
       const remarks: string[] = [];
       let inadmissible = false;
@@ -472,7 +472,7 @@ export async function processSinglePdf({
       const lValue = lEntry ? (lEntry.numericValue as number) : null;
 
       // Also check maxChildbirths from benefit plan (extracted by maternityBenefitRemarksPrompt)
-      const maxChildbirths = (initialAnalysis as Record<string, unknown>).maxChildbirths as number | null ?? 2;
+      const maxChildbirths = (initialAnalysis as unknown as Record<string, unknown>).maxChildbirths as number | null ?? 2;
 
       if (lValue !== null && lValue >= maxChildbirths) {
         inadmissible = true;
@@ -487,7 +487,7 @@ export async function processSinglePdf({
       // Some policies exclude maternity entirely (Standard Exclusion 4.1.14 / Code Excl18).
       // Check if the exclusions section or policy wordings contain maternity exclusion markers.
       const exclusionText = (
-        ((initialAnalysis as Record<string, unknown>).exclusionsSummary as string) ?? ""
+        ((initialAnalysis as unknown as Record<string, unknown>).exclusionsSummary as string) ?? ""
       ).toLowerCase();
       const maternityExclusionKeywords = [
         "excl18", "4.1.14", "maternity excluded", "maternity is excluded",
@@ -507,7 +507,7 @@ export async function processSinglePdf({
       // ── RULE 3: Newborn / 30-Day Waiting Period Check ─────────────────────
       // If patient age < 30 days → check if policy waiting period applies.
       // Clause 4.3: 30-day waiting period from first policy commencement date.
-      const patientAge = (initialAnalysis as Record<string, unknown>).patientAge as
+      const patientAge = (initialAnalysis as unknown as Record<string, unknown>).patientAge as
         { value?: string | number } | string | number | null | undefined;
       const ageValue = typeof patientAge === "object" && patientAge !== null
         ? patientAge.value : patientAge;
@@ -519,7 +519,7 @@ export async function processSinglePdf({
       if (daysMatch) ageDays = parseInt(daysMatch[1], 10);
       else if (ageStr === "newborn" || ageStr === "neonate" || ageStr === "0 days") ageDays = 0;
 
-      const waitingPeriod = (initialAnalysis as Record<string, unknown>).waitingPeriodDays as number | null ?? 30;
+      const waitingPeriod = (initialAnalysis as unknown as Record<string, unknown>).waitingPeriodDays as number | null ?? 30;
 
       if (ageDays !== null && ageDays < waitingPeriod) {
         inadmissible = true;
@@ -532,7 +532,7 @@ export async function processSinglePdf({
 
       // ── Apply flags to analysis ────────────────────────────────────────────
       if (inadmissible || remarks.length > 0) {
-        (initialAnalysis as Record<string, unknown>).maternityAdmissibilityResult = {
+        (initialAnalysis as unknown as Record<string, unknown>).maternityAdmissibilityResult = {
           admissible: !inadmissible,
           rejectionRemarks: remarks,
           lValue,
@@ -543,8 +543,8 @@ export async function processSinglePdf({
         };
         // Surface the rejection as processingRemarks for the AI summary tab
         if (inadmissible) {
-          const existing = ((initialAnalysis as Record<string, unknown>).processingRemarks as string) ?? "";
-          (initialAnalysis as Record<string, unknown>).processingRemarks =
+          const existing = ((initialAnalysis as unknown as Record<string, unknown>).processingRemarks as string) ?? "";
+          (initialAnalysis as unknown as Record<string, unknown>).processingRemarks =
             (existing ? existing + "\n\n" : "") + remarks.join("\n\n");
         }
       }
